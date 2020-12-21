@@ -51,7 +51,7 @@ public class ImageController {
     //Here a list of tags is added in the Model type object
     //this list is then sent to 'images/image.html' file and the tags are displayed
     @RequestMapping("/images/{imageId}/{title}")
-    public String showImage(@PathVariable("imageId") Integer imageId, Model model) {
+    public String showImage(@PathVariable("imageId") Integer imageId, @PathVariable("title") String title, Model model) {
         Image image = imageService.getImage(imageId);
         List<Comment> commentsList=commentService.getComments(imageId);
         model.addAttribute("image", image);
@@ -100,7 +100,6 @@ public class ImageController {
     //This string is then displayed by 'edit.html' file as previous tags of an image
     @RequestMapping(value = "/editImage")
     public String editImage(@RequestParam("imageId") Integer imageId, Model model, HttpSession httpSession) {
-        List<Comment> commentsList = commentService.getComments(imageId);
         Image image = imageService.getImage(imageId);
 
         //error message initialization
@@ -113,8 +112,6 @@ public class ImageController {
         model.addAttribute("tags", tags);
         //Adding error string to model object
         model.addAttribute("editError", error);
-        model.addAttribute("comments", commentsList);
-
         //implementation of validation for authorize user only edit the image
         if(user.getId().equals(image.getUser().getId())) {
             return "images/edit";
@@ -154,7 +151,7 @@ public class ImageController {
         updatedImage.setDate(new Date());
 
         imageService.updateImage(updatedImage);
-        return "redirect:/images/" + updatedImage.getTitle();
+        return "redirect:/images/" + updatedImage.getId() + "/" + updatedImage.getTitle();
     }
 
 
@@ -177,7 +174,7 @@ public class ImageController {
         //implementation of validation for authorize user only delete the image
         if (user.getId().equals(image.getUser().getId())) {
             imageService.deleteImage(imageId);
-            return "redirect:/images/";
+            return "redirect:/images";
         } else {
             return "images/image";
         }
@@ -216,13 +213,17 @@ public class ImageController {
     private String convertTagsToString(List<Tag> tags) {
         StringBuilder tagString = new StringBuilder();
 
-        for (int i = 0; i <= tags.size() - 2; i++) {
-            tagString.append(tags.get(i).getName()).append(",");
+        if (tags.size() > 0) {
+            for (int i = 0; i <= tags.size() - 2; i++) {
+                tagString.append(tags.get(i).getName()).append(",");
+            }
+
+            Tag lastTag = tags.get(tags.size() - 1);
+            tagString.append(lastTag.getName());
+
+            return tagString.toString();
+        } else {
+            return "";
         }
-
-        Tag lastTag = tags.get(tags.size() - 1);
-        tagString.append(lastTag.getName());
-
-        return tagString.toString();
     }
 }
