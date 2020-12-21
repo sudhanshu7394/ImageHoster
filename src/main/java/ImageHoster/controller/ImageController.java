@@ -1,8 +1,10 @@
 package ImageHoster.controller;
 
+import ImageHoster.model.Comment;
 import ImageHoster.model.Image;
 import ImageHoster.model.Tag;
 import ImageHoster.model.User;
+import ImageHoster.service.CommentService;
 import ImageHoster.service.ImageService;
 import ImageHoster.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ public class ImageController {
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired(required = true)
+    private CommentService commentService;
 
     @Autowired
     private TagService tagService;
@@ -48,8 +53,10 @@ public class ImageController {
     @RequestMapping("/images/{imageId}/{title}")
     public String showImage(@PathVariable("imageId") Integer imageId, Model model) {
         Image image = imageService.getImage(imageId);
+        List<Comment> commentsList=commentService.getComments(imageId);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+        model.addAttribute("comments", commentsList);
         return "images/image";
     }
 
@@ -93,6 +100,7 @@ public class ImageController {
     //This string is then displayed by 'edit.html' file as previous tags of an image
     @RequestMapping(value = "/editImage")
     public String editImage(@RequestParam("imageId") Integer imageId, Model model, HttpSession httpSession) {
+        List<Comment> commentsList = commentService.getComments(imageId);
         Image image = imageService.getImage(imageId);
 
         //error message initialization
@@ -105,6 +113,8 @@ public class ImageController {
         model.addAttribute("tags", tags);
         //Adding error string to model object
         model.addAttribute("editError", error);
+        model.addAttribute("comments", commentsList);
+
         //implementation of validation for authorize user only edit the image
         if(user.getId().equals(image.getUser().getId())) {
             return "images/edit";
